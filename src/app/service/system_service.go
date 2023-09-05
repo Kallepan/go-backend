@@ -12,15 +12,15 @@ import (
 )
 
 type SystemService interface {
-	GetPing(c *gin.Context)
+	GetPing(ctx *gin.Context)
 }
 
 type SystemServiceImpl struct {
 	systemRepository repository.SystemRepository
 }
 
-func (s SystemServiceImpl) GetPing(c *gin.Context) {
-	defer pkg.PanicHandler(c)
+func (s SystemServiceImpl) GetPing(ctx *gin.Context) {
+	defer pkg.PanicHandler(ctx)
 
 	data, err := s.systemRepository.GetVersion()
 	if err != nil {
@@ -28,7 +28,7 @@ func (s SystemServiceImpl) GetPing(c *gin.Context) {
 		pkg.PanicException(constant.DataNotFound)
 	}
 
-	c.JSON(http.StatusOK, pkg.BuildResponse(constant.Success, data))
+	ctx.JSON(http.StatusOK, pkg.BuildResponse(constant.Success, data))
 }
 
 func SystemServiceInit(systemRepository repository.SystemRepository) *SystemServiceImpl {

@@ -7,9 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func compareOrigin(c *gin.Context) string {
+func compareOrigin(ctx *gin.Context) string {
 	/* Compares the origin of the request with the allowed origins */
-	origin := c.Request.Header.Get("Origin")
+	origin := ctx.Request.Header.Get("Origin")
 
 	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
 
@@ -31,23 +31,23 @@ func compareOrigin(c *gin.Context) string {
 }
 
 func Cors() gin.HandlerFunc {
-	return func(c *gin.Context) {
+	return func(ctx *gin.Context) {
 		// Set the allowed origins
-		origin := compareOrigin(c)
+		origin := compareOrigin(ctx)
 
 		// Set the allowed headers
-		c.Header("Access-Control-Allow-Origin", origin)
-		c.Header("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Header("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
-		c.Header("Access-Control-Allow-Credentials", "true")
+		ctx.Header("Access-Control-Allow-Origin", origin)
+		ctx.Header("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		ctx.Header("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+		ctx.Header("Access-Control-Allow-Credentials", "true")
 
 		// If the request method is OPTIONS, return with status 200
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(200)
+		if ctx.Request.Method == "OPTIONS" {
+			ctx.AbortWithStatus(200)
 			return
 		}
 
 		// Continue to the next middleware
-		c.Next()
+		ctx.Next()
 	}
 }

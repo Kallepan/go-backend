@@ -7,15 +7,15 @@ import (
 )
 
 type SystemController interface {
-	GetPing(c *gin.Context)
+	GetPing(ctx *gin.Context)
 }
 
 type SystemControllerImpl struct {
 	svc service.SystemService
 }
 
-func (ctrl SystemControllerImpl) GetPing(c *gin.Context) {
-	ctrl.svc.GetPing(c)
+func (ctrl SystemControllerImpl) GetPing(ctx *gin.Context) {
+	ctrl.svc.GetPing(ctx)
 }
 
 func SystemControllerInit(systemService service.SystemService) *SystemControllerImpl {
