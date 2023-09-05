@@ -17,6 +17,10 @@ func Init(init *config.Initialization) *gin.Engine {
 	api := router.Group("/api/v1")
 	{
 		api.GET("/ping", init.SysCtrl.GetPing)
+
+		user := api.Group("/user")
+		user.GET("/", init.UserCtrl.GetAllUsers)
+		user.GET("/:userID", init.UserCtrl.GetUserById)
 	}
 
 	return router
