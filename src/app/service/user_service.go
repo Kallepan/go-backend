@@ -25,7 +25,7 @@ func (u UserServiceImpl) GetUserById(ctx *gin.Context) {
 	log.Info("Start get user by id")
 	userID, _ := strconv.Atoi(ctx.Param("userID"))
 
-	data, err := u.userRepository.FindUserByID(ctx, userID)
+	data, err := u.userRepository.FindUserByID(userID)
 	if err != nil {
 		log.Error(err)
 		pkg.PanicException(constant.UnknownError)
@@ -38,7 +38,7 @@ func (u UserServiceImpl) GetAllUser(ctx *gin.Context) {
 	defer pkg.PanicHandler(ctx)
 
 	log.Info("Start get all user")
-	data, err := u.userRepository.FindAllUsers(ctx)
+	data, err := u.userRepository.FindAllUsers()
 	if err != nil {
 		log.Error(err)
 		pkg.PanicException(constant.UnknownError)
