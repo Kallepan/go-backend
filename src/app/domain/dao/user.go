@@ -1,12 +1,10 @@
 package dao
 
 type User struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"-"`
-	Status   int    `json:"status"`
-	RoleID   int    `json:"role_id"`
-	Role     Role   `json:"role"`
+	ID       int    `gorm:"column:id; primary_key; not null" json:"id"`
+	Name     string `gorm:"column:name" json:"name"`
+	Email    string `gorm:"column:email" json:"email"`
+	Password string `gorm:"column:password;->:false" json:"-"`
+	Status   int    `gorm:"column:status" json:"status"`
 	BaseModel
 }

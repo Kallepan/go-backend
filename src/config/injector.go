@@ -8,13 +8,14 @@ import (
 	"github.com/kallepan/go-backend/app/controller"
 	"github.com/kallepan/go-backend/app/repository"
 	"github.com/kallepan/go-backend/app/service"
+	"github.com/kallepan/go-backend/drivers"
 
 	"github.com/google/wire"
 )
 
 // Set of providers for initialization
 /* Database */
-// var db = wire.NewSet(drivers.ConnectToDB)
+var db = wire.NewSet(drivers.ConnectToDB)
 
 /* system */
 var (
@@ -45,9 +46,10 @@ var (
 func Init() *Initialization {
 	wire.Build(
 		NewInitialization,
-		systemRepoSet,
-		systemSvcSet,
+		db,
 		systemCtrlrSet,
+		systemSvcSet,
+		systemRepoSet,
 		userCtrlrSet,
 		userSvcSet,
 		userRepoSet,
