@@ -9,6 +9,10 @@ func Null() interface{} {
 	return nil
 }
 
+func BuildReponseMessage[T any](responseStatus constant.ResponseStatus, data T, message string) dto.APIResponse[T] {
+	return BuildResponse_(responseStatus.GetResponseStatus(), message, data)
+}
+
 func BuildResponse[T any](responseStatus constant.ResponseStatus, data T) dto.APIResponse[T] {
 	return BuildResponse_(responseStatus.GetResponseStatus(), responseStatus.GetResponseMessage(), data)
 }

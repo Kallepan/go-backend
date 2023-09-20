@@ -20,6 +20,10 @@ func PanicException_(key int, message string) {
 	}
 }
 
+func PanicExceptionMessage(responseKey constant.ResponseStatus, message string) {
+	PanicException_(responseKey.GetResponseStatus(), message)
+}
+
 func PanicException(responseKey constant.ResponseStatus) {
 	PanicException_(responseKey.GetResponseStatus(), responseKey.GetResponseMessage())
 }
