@@ -1,5 +1,7 @@
 # GoLang Backend
 
+A generic Backend (REST) written in GoLang for my private projects.
+
 ## Installation
 
 ```bash
