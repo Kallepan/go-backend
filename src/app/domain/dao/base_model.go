@@ -2,12 +2,11 @@ package dao
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type BaseModel struct {
-	CreatedAt time.Time      `gorm:"->:false;column:created_at" json:"-"`
-	UpdatedAt time.Time      `gorm:"->:false;column:updated_at" json:"-"`
-	DeletedAt gorm.DeletedAt `gorm:"->:false;column:deleted_at" json:"-"`
+	// Add this model to all other structs to add common fields
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	DeletedAt time.Time `json:"deleted_at"`
 }
