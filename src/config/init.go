@@ -7,28 +7,19 @@ import (
 )
 
 type Initialization struct {
-	sysRepo  repository.SystemRepository
-	sysSvc   service.SystemService
-	SysCtrl  controller.SystemController
-	userRepo repository.UserRepository
-	userSvc  service.UserService
-	UserCtrl controller.UserController
+	sysRepo repository.SystemRepository
+	sysSvc  service.SystemService
+	SysCtrl controller.SystemController
 }
 
 func NewInitialization(
 	sysRepo repository.SystemRepository,
 	sysSvc service.SystemService,
 	sysCtrl controller.SystemController,
-	userRepo repository.UserRepository,
-	userSvc service.UserService,
-	userCtrl controller.UserController,
 ) *Initialization {
 	return &Initialization{
-		sysRepo:  sysRepo,
-		sysSvc:   sysSvc,
-		SysCtrl:  sysCtrl,
-		userRepo: userRepo,
-		userSvc:  userSvc,
-		UserCtrl: userCtrl,
+		sysRepo: sysRepo,
+		sysSvc:  sysSvc,
+		SysCtrl: sysCtrl,
 	}
 }

@@ -1,24 +1,29 @@
 package config
 
 import (
+	"log/slog"
 	"os"
-
-	log "github.com/sirupsen/logrus"
 )
 
 func InitlLog() {
-	log.SetLevel(getLoggerLevel(os.Getenv("LOG_LEVEL")))
-	log.SetReportCaller(true)
-	log.SetFormatter(&log.JSONFormatter{})
+	opts := &slog.HandlerOptions{
+		Level:     getLoggerLevel(),
+		AddSource: true,
+	}
+
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, opts))
+	slog.SetDefault(logger)
 }
 
-func getLoggerLevel(value string) log.Level {
+func getLoggerLevel() slog.Level {
+	value := os.Getenv("LOG_LEVEL")
+
 	switch value {
 	case "DEBUG":
-		return log.DebugLevel
+		return slog.LevelDebug
 	case "TRACE":
-		return log.TraceLevel
+		return slog.LevelError
 	default:
-		return log.InfoLevel
+		return slog.LevelInfo
 	}
 }

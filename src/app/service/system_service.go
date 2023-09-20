@@ -1,6 +1,7 @@
 package service
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/kallepan/go-backend/app/constant"
@@ -8,7 +9,6 @@ import (
 	"github.com/kallepan/go-backend/app/repository"
 
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
 )
 
 type SystemService interface {
@@ -24,7 +24,7 @@ func (s SystemServiceImpl) GetPing(ctx *gin.Context) {
 
 	data, err := s.systemRepository.GetVersion()
 	if err != nil {
-		log.Error("Got error when get version: ", err)
+		slog.Error("Got error when get version: ", err)
 		pkg.PanicException(constant.DataNotFound)
 	}
 
