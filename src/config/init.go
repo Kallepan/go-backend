@@ -9,10 +9,13 @@ import (
 )
 
 type Initialization struct {
-	db      *sql.DB
-	sysRepo repository.SystemRepository
-	sysSvc  service.SystemService
-	SysCtrl controller.SystemController
+	db       *sql.DB
+	sysRepo  repository.SystemRepository
+	sysSvc   service.SystemService
+	SysCtrl  controller.SystemController
+	userRepo repository.UserRepository
+	userSvc  service.UserService
+	UserCtrl controller.UserController
 }
 
 func NewInitialization(
@@ -20,11 +23,17 @@ func NewInitialization(
 	sysRepo repository.SystemRepository,
 	sysSvc service.SystemService,
 	sysCtrl controller.SystemController,
+	userRepo repository.UserRepository,
+	userSvc service.UserService,
+	userCtrl controller.UserController,
 ) *Initialization {
 	return &Initialization{
-		db:      db,
-		sysRepo: sysRepo,
-		sysSvc:  sysSvc,
-		SysCtrl: sysCtrl,
+		db:       db,
+		sysRepo:  sysRepo,
+		sysSvc:   sysSvc,
+		SysCtrl:  sysCtrl,
+		userRepo: userRepo,
+		userSvc:  userSvc,
+		UserCtrl: userCtrl,
 	}
 }

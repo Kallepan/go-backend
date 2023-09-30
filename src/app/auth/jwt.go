@@ -1,7 +1,3 @@
-/*
-* This file is theoretically able to create and validate JWT tokens.
-* However, it is not used in the application.
- */
 package auth
 
 import (
