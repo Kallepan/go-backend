@@ -10,7 +10,7 @@
 	// The optional 'workspaceFolder' property is the path VS Code should open by default when
 	// connected. This is typically a file mount in .devcontainer/docker-compose.yml
 	"workspaceFolder": "/workspace",
-	"postCreateCommand": "go mod download",
+	"postCreateCommand":"cd src && go mod download && go install github.com/google/wire/cmd/wire@latest",
 	
 	"customizations": {
 		"vscode": {

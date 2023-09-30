@@ -5,6 +5,7 @@
 # Check if wire is installed
 if ! [ -x "$(command -v wire)" ]; then
   echo 'Error: wire is not installed.' >&2
+  echo 'Please install wire by running: go install github.com/google/wire/cmd/wire@latest' >&2
   exit 1
 fi
 
