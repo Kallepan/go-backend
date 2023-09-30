@@ -4,4 +4,7 @@ LABEL name="GoLang Dev Container" \
     description="GoLang Dev Container" \
     version="1.0.0"
 
-EXPOSE 8080
+# Install Go tools
+RUN go install github.com/google/wire/cmd/wire@latest
+
+EXPOSE ${PORT}
