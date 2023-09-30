@@ -16,7 +16,8 @@
 		"vscode": {
 			"extensions": [
 				"golang.Go",
-				"GitHub.copilot"
+				"GitHub.copilot",
+				"DavidAnson.vscode-markdownlint"
 			]
 		}
 	}
