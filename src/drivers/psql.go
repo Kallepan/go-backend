@@ -15,11 +15,11 @@ import (
 )
 
 var (
-	DB   *sql.DB
+	db   *sql.DB
 	once sync.Once
 )
 
-type dbConfig struct {
+type PSQLConfig struct {
 	User     string
 	Password string
 	DBName   string
@@ -27,16 +27,16 @@ type dbConfig struct {
 	Port     string
 }
 
-func (db *dbConfig) Init(ctx context.Context) {
+func (pc *PSQLConfig) Init(ctx context.Context) {
 	once.Do(
 		func() {
 			connectionString := fmt.Sprintf(
 				"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-				db.Host,
-				db.User,
-				db.Password,
-				db.DBName,
-				db.Port,
+				pc.Host,
+				pc.User,
+				pc.Password,
+				pc.DBName,
+				pc.Port,
 			)
 			instance, err := sql.Open("postgres", connectionString)
 			if err != nil {
@@ -47,7 +47,7 @@ func (db *dbConfig) Init(ctx context.Context) {
 			// Close the DB connection when the context is done
 			go func() {
 				<-ctx.Done()
-				if err := DB.Close(); err != nil {
+				if err := db.Close(); err != nil {
 					slog.Error(err.Error())
 					panic(err)
 				}
@@ -60,20 +60,20 @@ func (db *dbConfig) Init(ctx context.Context) {
 			}
 
 			// Set the global DB instance to the local instance
-			DB = instance
+			db = instance
 		},
 	)
 }
 
 func initMigrations() {
 	// Run the migrations
-	if DB == nil {
+	if db == nil {
 		slog.Error("DB connection not initialized")
 		panic("DB connection not initialized")
 	}
 
 	// Run the migrations
-	driver, err := postgres.WithInstance(DB, &postgres.Config{})
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		slog.Error(err.Error())
 		panic(err)
@@ -100,9 +100,10 @@ func initMigrations() {
 	slog.Info("Migrations completed!")
 }
 
-func Init(ctx context.Context) {
+func ConnectToDB() *sql.DB {
+	ctx := context.Background()
 	/* Set up the connection String using the dbConfig struct */
-	db := dbConfig{
+	pc := PSQLConfig{
 		User:     os.Getenv("POSTGRES_USER"),
 		Password: os.Getenv("POSTGRES_PASSWORD"),
 		DBName:   os.Getenv("POSTGRES_DB"),
@@ -111,8 +112,21 @@ func Init(ctx context.Context) {
 	}
 
 	// Initialize the DB connection
-	db.Init(ctx)
+	pc.Init(ctx)
+
+	// Verify the DB connection
+	if db == nil {
+		slog.Error("DB connection not initialized")
+		panic("DB connection not initialized")
+	}
+
+	if err := db.Ping(); err != nil {
+		slog.Error("DB connection not initialized")
+		panic("DB connection not initialized")
+	}
 
 	// Run the migrations
 	initMigrations()
+
+	return db
 }

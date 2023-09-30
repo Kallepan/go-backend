@@ -11,21 +11,25 @@ import (
 	"github.com/kallepan/go-backend/app/controller"
 	"github.com/kallepan/go-backend/app/repository"
 	"github.com/kallepan/go-backend/app/service"
+	"github.com/kallepan/go-backend/drivers"
 )
 
 // Injectors from injector.go:
 
 func Init() *Initialization {
+	sqlDB := drivers.ConnectToDB()
 	systemRepositoryImpl := repository.SystemRepositoryInit()
 	systemServiceImpl := service.SystemServiceInit(systemRepositoryImpl)
 	systemControllerImpl := controller.SystemControllerInit(systemServiceImpl)
-	initialization := NewInitialization(systemRepositoryImpl, systemServiceImpl, systemControllerImpl)
+	initialization := NewInitialization(sqlDB, systemRepositoryImpl, systemServiceImpl, systemControllerImpl)
 	return initialization
 }
 
 // injector.go:
 
-// Set of providers for initialization
+/* Database */
+var db = wire.NewSet(drivers.ConnectToDB)
+
 /* system */
 var (
 	systemSvcSet   = wire.NewSet(service.SystemServiceInit, wire.Bind(new(service.SystemService), new(*service.SystemServiceImpl)))
