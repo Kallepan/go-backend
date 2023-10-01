@@ -5,14 +5,11 @@ services:
   - name: docker:dind
     entrypoint: ["dockerd-entrypoint.sh", "--tls=false"]
 
-before_script:
-  - docker info
-
-build-backend:
+build-image:
   image: docker:stable
   stage: build
   script:
     # This uses my own registry, but you can use any registry you want
     - echo "$DOCKER_REGISTRY_PASS" | docker login registry.server.home --username $DOCKER_REGISTRY_USER --password-stdin
-    - docker build -t registry.server.home/kalle/generic-backend:latest .
-    - docker push registry.server.home/kalle/generic-backend:latest
+    - docker build -t registry.server.home/kalle/go-backend:latest .
+    - docker push registry.server.home/kalle/go-backend:latest
