@@ -16,8 +16,6 @@ FROM scratch
 WORKDIR /app
 COPY --from=builder /project/build/main /app/build/main
 
-COPY scripts/launch.sh .
-RUN chmod +x launch.sh
-
+# Command to run the executable
 EXPOSE 8080
-CMD [ "/app/launch.sh" ]
+CMD [ "/app/main" ]
