@@ -14,7 +14,8 @@ RUN go build -o /project/build/main .
 # Now copy it into our base image.
 FROM scratch
 WORKDIR /app
-COPY --from=builder /project/build/main /app/build/main
+COPY --from=builder /project/build/main .
+COPY migrations /migrations
 
 # Command to run the executable
 EXPOSE 8080

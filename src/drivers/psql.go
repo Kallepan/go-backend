@@ -79,12 +79,13 @@ func initMigrations() {
 		panic(err)
 	}
 
-	migrationPath := os.Getenv("MIGRATION_PATH")
-	if migrationPath == "" {
-		migrationPath = "file://app/migrations"
+	migrationsPath := os.Getenv("MIGRATIONS_PATH")
+	if migrationsPath == "" {
+		slog.Error("MIGRATIONS_PATH not set")
+		panic("MIGRATIONS_PATH not set")
 	}
 
-	m, err := migrate.NewWithDatabaseInstance(migrationPath, "postgres", driver)
+	m, err := migrate.NewWithDatabaseInstance(migrationsPath, "postgres", driver)
 	if err != nil {
 		slog.Error(err.Error())
 		panic(err)
