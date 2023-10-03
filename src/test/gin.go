@@ -26,6 +26,16 @@ func GetGinTestCtx(w *httptest.ResponseRecorder) *gin.Context {
 
 // Mock GET request with JSON
 func GET(ctx *gin.Context, params gin.Params, u url.Values) {
+	/*
+		Call like this:
+		GET(ctx, gin.Params{
+			gin.Param{Key: "id", Value: "1"},
+		}, url.Values{
+			"page": []string{"1"},
+		})
+
+		Params and query params are optional
+	*/
 	ctx.Request.Method = "GET"
 	ctx.Request.Header.Set("Content-Type", "application/json")
 
@@ -38,6 +48,9 @@ func GET(ctx *gin.Context, params gin.Params, u url.Values) {
 
 // Mock POST request with JSON
 func POST(ctx *gin.Context, params gin.Params, u url.Values, content interface{}) {
+	/*
+		Post method with JSON
+	*/
 	ctx.Request.Method = "POST"
 	ctx.Request.Header.Set("Content-Type", "application/json")
 
@@ -54,4 +67,18 @@ func POST(ctx *gin.Context, params gin.Params, u url.Values, content interface{}
 	}
 
 	ctx.Request.Body = io.NopCloser(bytes.NewReader(jsonbytes))
+}
+
+func DELETE(ctx *gin.Context, params gin.Params, u url.Values) {
+	/*
+		Delete method
+	*/
+	ctx.Request.Method = "DELETE"
+	ctx.Request.Header.Set("Content-Type", "application/json")
+
+	// Set the params
+	ctx.Params = params
+
+	// Set the query params
+	ctx.Request.URL.RawQuery = u.Encode()
 }
