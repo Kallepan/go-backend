@@ -10,11 +10,11 @@ services:
       - db:/var/lib/postgresql/data
 
   devcontainer:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
+    env_file:
+      - ../.dev.env
     volumes:
-      - ..:/workspace:cached
+      - ../.:/workspace:cached
     command: sleep infinity
     ports:
       - 8080:8080
