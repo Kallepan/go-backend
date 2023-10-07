@@ -15,6 +15,7 @@ services:
       - ../.dev.env
     volumes:
       - ../.:/workspace:cached
+      - ~/.ssh:/root/.ssh
     command: sleep infinity
     ports:
       - 8080:8080
