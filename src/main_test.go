@@ -16,7 +16,7 @@ func TestPing(t *testing.T) {
 	svc := service.SystemServiceInit(rep)
 	// Create a response recorder
 	w := httptest.NewRecorder()
-	ctx := test.GetGinTestCtx(w)
+	ctx := test.GetGinTestContext(w)
 
 	// Mock GET request with JSON
 	test.GET(ctx, nil, nil)

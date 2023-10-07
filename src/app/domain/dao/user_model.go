@@ -3,10 +3,10 @@ package dao
 import "golang.org/x/crypto/bcrypt"
 
 type User struct {
-	FirstName string `json:"firstname" binding:"required"`
-	LastName  string `json:"lastname" binding:"required"`
+	Firstname string `json:"firstname" binding:"required"`
+	Lastname  string `json:"lastname" binding:"required"`
 	Username  string `json:"username" binding:"required"`
-	Email     string `json:"email" binding:"required"`
+	Email     string `json:"email" binding:"required,email"`
 	Password  string `json:"password,omitempty" binding:"required"`
 	UserId    string `json:"user_id"`
 

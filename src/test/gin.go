@@ -12,7 +12,7 @@ import (
 )
 
 // Get a gin context for testing
-func GetGinTestCtx(w *httptest.ResponseRecorder) *gin.Context {
+func GetGinTestContext(w *httptest.ResponseRecorder) *gin.Context {
 	gin.SetMode(gin.TestMode)
 
 	ctx, _ := gin.CreateTestContext(w)
@@ -47,7 +47,7 @@ func GET(ctx *gin.Context, params gin.Params, u url.Values) {
 }
 
 // Mock POST request with JSON
-func POST(ctx *gin.Context, params gin.Params, u url.Values, content interface{}) {
+func POST(ctx *gin.Context, params gin.Params, u url.Values, body interface{}) {
 	/*
 		Post method with JSON
 	*/
@@ -61,7 +61,7 @@ func POST(ctx *gin.Context, params gin.Params, u url.Values, content interface{}
 	ctx.Request.URL.RawQuery = u.Encode()
 
 	// json
-	jsonbytes, err := json.Marshal(content)
+	jsonbytes, err := json.Marshal(body)
 	if err != nil {
 		panic(err)
 	}

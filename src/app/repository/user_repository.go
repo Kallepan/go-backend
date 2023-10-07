@@ -27,8 +27,8 @@ func (u UserRepositoryImpl) GetUserByUsername(username string) (*dao.User, error
 	err := u.db.QueryRow(query, username).Scan(
 		&user.UserId,
 		&user.Email,
-		&user.FirstName,
-		&user.LastName,
+		&user.Firstname,
+		&user.Lastname,
 		&user.Username,
 		&user.Password)
 	if err != nil {
@@ -50,8 +50,8 @@ func (u UserRepositoryImpl) RegisterUser(user *dao.User) (string, error) {
 	err := u.db.QueryRow(
 		query,
 		&user.Email,
-		&user.FirstName,
-		&user.LastName,
+		&user.Firstname,
+		&user.Lastname,
 		&user.Username,
 		&user.Password).Scan(&userID)
 	if err != nil {

@@ -46,6 +46,10 @@ func PanicHandler(ctx *gin.Context) {
 			constant.Unauthorized.GetResponseStatus():
 			ctx.JSON(http.StatusUnauthorized, BuildResponse_(key, msg, Null()))
 			ctx.Abort()
+		case
+			constant.InvalidRequest.GetResponseStatus():
+			ctx.JSON(http.StatusBadRequest, BuildResponse_(key, msg, Null()))
+			ctx.Abort()
 		default:
 			ctx.JSON(http.StatusInternalServerError, BuildResponse_(key, msg, Null()))
 			ctx.Abort()

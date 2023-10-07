@@ -27,7 +27,7 @@ func TestCompareOrigin(t *testing.T) {
 	for _, testStep := range compareOriginTests {
 		// prepare the necessary variables
 		w := httptest.NewRecorder()
-		ctx := test.GetGinTestCtx(w)
+		ctx := test.GetGinTestContext(w)
 
 		// set the origin
 		ctx.Request.Header.Set("Origin", testStep.origin)
