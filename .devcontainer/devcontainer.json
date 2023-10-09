@@ -5,13 +5,18 @@
 	"dockerComposeFile": [
 		"docker-compose.yaml"
 	],
-	"service": "devcontainer",
+	"service": "app",
 
 	// The optional 'workspaceFolder' property is the path VS Code should open by default when
 	// connected. This is typically a file mount in .devcontainer/docker-compose.yml
-	"workspaceFolder": "/workspace",
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 	"postCreateCommand": "cd src && go mod download && go mod tidy",
 	
+	"forwardPorts": [
+		5432,
+		8080
+	],
+
 	"customizations": {
 		"vscode": {
 			"settings": {
@@ -30,7 +35,8 @@
 			"extensions": [
 				"golang.Go",
 				"GitHub.copilot",
-				"DavidAnson.vscode-markdownlint"
+				"DavidAnson.vscode-markdownlint",
+				"eamodio.gitlens"
 			]
 		}
 	},
