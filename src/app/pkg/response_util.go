@@ -1,23 +1,19 @@
 package pkg
 
 import (
-	"github.com/kallepan/go-backend/app/constant"
-	"github.com/kallepan/go-backend/app/domain/dto"
+	"auth-backend/app/constant"
+	"auth-backend/app/domain/dto"
 )
 
 func Null() interface{} {
 	return nil
 }
 
-func BuildReponseMessage[T any](responseStatus constant.ResponseStatus, data T, message string) dto.APIResponse[T] {
-	return BuildResponse_(responseStatus.GetResponseStatus(), message, data)
-}
-
 func BuildResponse[T any](responseStatus constant.ResponseStatus, data T) dto.APIResponse[T] {
 	return BuildResponse_(responseStatus.GetResponseStatus(), responseStatus.GetResponseMessage(), data)
 }
 
-func BuildResponse_[T any](status int, message string, data T) dto.APIResponse[T] {
+func BuildResponse_[T any](status string, message string, data T) dto.APIResponse[T] {
 	return dto.APIResponse[T]{
 		ResponseKey:     status,
 		ResponseMessage: message,

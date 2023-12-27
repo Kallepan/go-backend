@@ -1,97 +1,209 @@
 package service
 
 import (
+	"auth-backend/app/constant"
+	"auth-backend/app/domain/dao"
+	"auth-backend/app/pkg"
+	"auth-backend/app/repository"
 	"log/slog"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kallepan/go-backend/app/auth"
-	"github.com/kallepan/go-backend/app/constant"
-	"github.com/kallepan/go-backend/app/domain/dao"
-	"github.com/kallepan/go-backend/app/domain/dco"
-	"github.com/kallepan/go-backend/app/pkg"
-	"github.com/kallepan/go-backend/app/repository"
+	"github.com/google/uuid"
+	"github.com/google/wire"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService interface {
-	RegisterUser(ctx *gin.Context)
-	LoginUser(ctx *gin.Context)
+	GetAllUsers(c *gin.Context)
+	GetUserById(c *gin.Context)
+	AddUser(c *gin.Context)
+	UpdateUser(c *gin.Context)
+	DeleteUser(c *gin.Context)
+
+	AddPermission(c *gin.Context)
+	DeletePermission(c *gin.Context)
 }
 
 type UserServiceImpl struct {
-	userRepository repository.UserRepository
+	UserRepository repository.UserRepository
 }
 
-func UserServiceInit(userRepository repository.UserRepository) *UserServiceImpl {
-	return &UserServiceImpl{
-		userRepository: userRepository,
-	}
-}
+func (u UserServiceImpl) UpdateUser(c *gin.Context) {
+	/* Method to update user data by id */
+	defer pkg.PanicHandler(c)
+	slog.Info("start to execute program update user data by id")
 
-func (u UserServiceImpl) LoginUser(ctx *gin.Context) {
-	defer pkg.PanicHandler(ctx)
-	slog.Info("Received request to login user")
-
-	var request dco.TokenRequest
-
-	// Validate request
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		slog.Error("Error binding JSON", err)
+	id := c.Param("userID")
+	userID, err := uuid.Parse(id)
+	if err != nil {
+		slog.Error("Error when parsing uuid. Error", "error", err)
 		pkg.PanicException(constant.InvalidRequest)
 	}
 
-	// Check if user exists and password is correct
-	user, err := u.userRepository.GetUserByUsername(request.Username)
-	if err != nil {
-		slog.Error("Error getting user", err)
-		pkg.PanicException(constant.Unauthorized)
+	var request dao.User
+	if err := c.ShouldBindJSON(&request); err != nil {
+		slog.Error("Error happened: when mapping request", "error", err)
+		pkg.PanicException(constant.InvalidRequest)
 	}
 
-	// Check if password is correct
-	credentialsError := user.CheckPassword(request.Password)
-	if credentialsError != nil {
-		slog.Error("Error checking password", credentialsError)
-		pkg.PanicException(constant.Unauthorized)
+	data, err := u.UserRepository.FindUserById(userID)
+	if err != nil {
+		slog.Error("Error happened: when get data from database", "error", err)
+		pkg.PanicException(constant.DataNotFound)
 	}
 
-	// Generate token
-	tokenString, err := auth.GenerateJWTToken(user.Username, user.Email, user.UserId)
+	// Foreign keys
+	data.DepartmentID = request.DepartmentID
+
+	// Data
+	data.Email = request.Email
+	data.Username = request.Username
+
+	// Save to database
+	data, err = u.UserRepository.Save(&data)
 	if err != nil {
-		slog.Error("Error generating token", err)
+		slog.Error("Error happened: when updating data to database", "error", err)
 		pkg.PanicException(constant.UnknownError)
 	}
 
-	ctx.JSON(200, pkg.BuildResponse(constant.Success, gin.H{"token": tokenString}))
+	c.JSON(http.StatusOK, pkg.BuildResponse(constant.Success, data))
 }
 
-func (u UserServiceImpl) RegisterUser(ctx *gin.Context) {
-	defer pkg.PanicHandler(ctx)
-	slog.Info("Received request to register user")
+func (u UserServiceImpl) GetUserById(c *gin.Context) {
+	/* Method to get user data by id */
+	defer pkg.PanicHandler(c)
+	slog.Info("start to execute program get user by id")
 
-	var user dao.User
-	if err := ctx.ShouldBindJSON(&user); err != nil {
-		slog.Error("Error binding JSON", err)
-		pkg.PanicException(constant.InvalidRequest)
-	}
-
-	// Check if user exists
-	if u.userRepository.CheckIfUserExists(user.Username) {
-		slog.Info("User already exists...", "user", user.Username)
-		pkg.PanicException(constant.InvalidRequest)
-	}
-
-	// Hash password
-	if err := user.HashPassword(); err != nil {
-		slog.Error("Error hashing password", err)
-		pkg.PanicException(constant.InvalidRequest)
-	}
-
-	// Register user and capture user_id
-	userID, err := u.userRepository.RegisterUser(&user)
+	id := c.Param("userID")
+	userID, err := uuid.Parse(id)
 	if err != nil {
-		slog.Error("Error registering user", err)
+		slog.Error("Error happened: when parsing uuid", "error", err)
+		pkg.PanicException(constant.InvalidRequest)
+	}
+
+	data, err := u.UserRepository.FindUserById(userID)
+	if err != nil {
+		slog.Error("Error happened: when get data from database", "error", err)
+		pkg.PanicException(constant.DataNotFound)
+	}
+
+	c.JSON(http.StatusOK, pkg.BuildResponse(constant.Success, data))
+}
+
+func (u UserServiceImpl) AddUser(c *gin.Context) {
+	defer pkg.PanicHandler(c)
+	slog.Info("start to execute program add data user")
+
+	var request dao.User
+	if err := c.ShouldBindJSON(&request); err != nil {
+		slog.Error("Error happened: when mapping request", "error", err)
+		pkg.PanicException(constant.InvalidRequest)
+	}
+
+	hash, _ := bcrypt.GenerateFromPassword([]byte(request.Password), 15)
+	request.Password = string(hash)
+
+	data, err := u.UserRepository.Save(&request)
+	if err != nil {
+		slog.Error("Error happened: when saving data to database", "error", err)
 		pkg.PanicException(constant.UnknownError)
 	}
-	user.UserId = userID
 
-	ctx.JSON(200, pkg.BuildResponse(constant.Success, user))
+	c.JSON(http.StatusOK, pkg.BuildResponse(constant.Success, data))
 }
+
+func (u UserServiceImpl) GetAllUsers(c *gin.Context) {
+	/* Method to get all user data */
+	defer pkg.PanicHandler(c)
+	slog.Info("start to execute get all data user")
+
+	data, err := u.UserRepository.FindAllUsers()
+	if err != nil {
+		slog.Error("Error happened: when find all user data", "error", err)
+		pkg.PanicException(constant.UnknownError)
+	}
+
+	c.JSON(http.StatusOK, pkg.BuildResponse(constant.Success, data))
+}
+
+func (u UserServiceImpl) DeleteUser(c *gin.Context) {
+	defer pkg.PanicHandler(c)
+	slog.Info("start to execute delete data user by id")
+
+	id := c.Param("userID")
+	userID, err := uuid.Parse(id)
+	if err != nil {
+		slog.Error("Error happened: when parsing string to int", "error", err)
+		pkg.PanicException(constant.InvalidRequest)
+	}
+
+	err = u.UserRepository.DeleteUser(userID)
+	if err != nil {
+		slog.Error("Error happened: when try delete data user from DB", "error", err)
+		pkg.PanicException(constant.UnknownError)
+	}
+
+	c.JSON(http.StatusOK, pkg.BuildResponse(constant.Success, pkg.Null()))
+}
+
+func (u UserServiceImpl) AddPermission(c *gin.Context) {
+	/* Method to add permission to user */
+	defer pkg.PanicHandler(c)
+	slog.Info("start to execute program add permission to user")
+
+	id := c.Param("userID")
+	userID, err := uuid.Parse(id)
+	if err != nil {
+		slog.Error("Error happened: when parsing uuid", "error", err)
+		pkg.PanicException(constant.InvalidRequest)
+	}
+
+	pId := c.Param("permissionID")
+	permissionID, err := uuid.Parse(pId)
+	if err != nil {
+		slog.Error("Error happened: when parsing uuid", "error", err)
+		pkg.PanicException(constant.InvalidRequest)
+	}
+
+	err = u.UserRepository.AddPermissionToUser(userID, permissionID)
+	if err != nil {
+		slog.Error("Error happened: when add permission to user", "error", err)
+		pkg.PanicException(constant.UnknownError)
+	}
+
+	c.JSON(http.StatusOK, pkg.BuildResponse(constant.Success, pkg.Null()))
+}
+
+func (u UserServiceImpl) DeletePermission(c *gin.Context) {
+	/* Method to delete permission to user */
+	defer pkg.PanicHandler(c)
+	slog.Info("start to execute program delete permission to user")
+
+	id := c.Param("userID")
+	userID, err := uuid.Parse(id)
+	if err != nil {
+		slog.Error("Error happened: when parsing uuid", "error", err)
+		pkg.PanicException(constant.InvalidRequest)
+	}
+
+	pId := c.Param("permissionID")
+	permissionID, err := uuid.Parse(pId)
+	if err != nil {
+		slog.Error("Error happened: when parsing uuid", "error", err)
+		pkg.PanicException(constant.InvalidRequest)
+	}
+
+	err = u.UserRepository.DeletePermissionFromUser(userID, permissionID)
+	if err != nil {
+		slog.Error("Error happened: when delete permission to user", "error", err)
+		pkg.PanicException(constant.UnknownError)
+	}
+
+	c.JSON(http.StatusOK, pkg.BuildResponse(constant.Success, pkg.Null()))
+}
+
+var userServiceSet = wire.NewSet(
+	wire.Struct(new(UserServiceImpl), "*"),
+	wire.Bind(new(UserService), new(*UserServiceImpl)),
+)

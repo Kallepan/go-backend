@@ -3,23 +3,30 @@ services:
   db:
     image: postgres:16
     restart: unless-stopped
+    ports:
+      - 5432:5432
     env_file:
       - .env
     volumes:
-      - db:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - default
 
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: mcr.microsoft.com/devcontainers/base:jammy
     env_file:
       - .env
     volumes:
       - ../..:/workspaces:cached
     command: sleep infinity
-    network_mode: service:db
+    networks:
+      - default
     depends_on:
       - db
 
 volumes:
-  db:
+  db-data:
+
+networks:
+  default:
+    name: backend

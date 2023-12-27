@@ -1,83 +1,118 @@
 package repository
 
 import (
-	"database/sql"
+	"auth-backend/app/domain/dao"
+	"log/slog"
 
-	"github.com/kallepan/go-backend/app/domain/dao"
+	"github.com/google/uuid"
+	"github.com/google/wire"
+	"gorm.io/gorm"
 )
 
 type UserRepository interface {
-	RegisterUser(user *dao.User) (string, error)
-	CheckIfUserExists(username string) bool
-	GetUserByUsername(username string) (*dao.User, error)
+	FindAllUsers() ([]dao.User, error)
+	FindUserById(id uuid.UUID) (dao.User, error)
+	Save(user *dao.User) (dao.User, error)
+	DeleteUser(id uuid.UUID) error
+
+	AddPermissionToUser(userID uuid.UUID, permissionID uuid.UUID) error
+	DeletePermissionFromUser(userID uuid.UUID, permissionID uuid.UUID) error
 }
 
 type UserRepositoryImpl struct {
-	db *sql.DB
+	db *gorm.DB
 }
 
-func (u UserRepositoryImpl) GetUserByUsername(username string) (*dao.User, error) {
-	/* Returns the user object with the user_id */
-	var user dao.User
+func (u UserRepositoryImpl) FindAllUsers() ([]dao.User, error) {
+	var users []dao.User
 
-	query := `
-		SELECT user_id, email, firstname, lastname, username, password
-		FROM users
-		WHERE username = $1`
-	err := u.db.QueryRow(query, username).Scan(
-		&user.UserId,
-		&user.Email,
-		&user.Firstname,
-		&user.Lastname,
-		&user.Username,
-		&user.Password)
+	var err = u.db.Preload("Permissions").Find(&users).Error
 	if err != nil {
+		slog.Error("Got an error finding all couples.", "error", err)
 		return nil, err
 	}
 
-	return &user, nil
+	return users, nil
 }
 
-func (u UserRepositoryImpl) RegisterUser(user *dao.User) (string, error) {
-	/* Creates the user and returns the user object with the user_id */
-
-	// Insert user into database
-	query := `
-		INSERT INTO users (email, firstname, lastname, username, password)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING user_id`
-	var userID string
-	err := u.db.QueryRow(
-		query,
-		&user.Email,
-		&user.Firstname,
-		&user.Lastname,
-		&user.Username,
-		&user.Password).Scan(&userID)
-	if err != nil {
-		return "", err
+func (u UserRepositoryImpl) FindUserById(id uuid.UUID) (dao.User, error) {
+	user := dao.User{
+		BaseModel: dao.BaseModel{
+			ID: id,
+		},
 	}
-
-	return userID, nil
+	err := u.db.Preload("Permissions").First(&user).Error
+	if err != nil {
+		slog.Error("Got and error when find user by id.", "error", err)
+		return dao.User{}, err
+	}
+	return user, nil
 }
 
-func UserRepositoryInit(db *sql.DB) *UserRepositoryImpl {
+func (u UserRepositoryImpl) Save(user *dao.User) (dao.User, error) {
+	var err = u.db.Save(user).Error
+	if err != nil {
+		slog.Error("Got an error when save user.", "error", err)
+		return dao.User{}, err
+	}
+	return *user, nil
+}
+
+func (u UserRepositoryImpl) DeleteUser(id uuid.UUID) error {
+	err := u.db.Delete(&dao.User{}, id).Error
+	if err != nil {
+		slog.Error("Got an error when delete user.", "error", err)
+		return err
+	}
+	return nil
+}
+
+func (u UserRepositoryImpl) AddPermissionToUser(userID uuid.UUID, permissionID uuid.UUID) error {
+	user := dao.User{
+		BaseModel: dao.BaseModel{
+			ID: userID,
+		},
+	}
+	permission := dao.Permission{
+		BaseModel: dao.BaseModel{
+			ID: userID,
+		},
+	}
+	err := u.db.Model(&user).Association("Permissions").Append(&permission)
+	if err != nil {
+		slog.Error("Got an error when add permission to user.", "error", err)
+		return err
+	}
+	return nil
+}
+
+func (u UserRepositoryImpl) DeletePermissionFromUser(userID uuid.UUID, permissionID uuid.UUID) error {
+	user := dao.User{
+		BaseModel: dao.BaseModel{
+			ID: userID,
+		},
+	}
+	permission := dao.Permission{
+		BaseModel: dao.BaseModel{
+			ID: userID,
+		},
+	}
+	err := u.db.Model(&user).Association("Permissions").Delete(&permission)
+	if err != nil {
+		slog.Error("Got an error when remove permission from user.", "error", err)
+		return err
+	}
+	return nil
+}
+
+func UserRepositoryInit(db *gorm.DB) *UserRepositoryImpl {
+	db.AutoMigrate(&dao.User{})
 	return &UserRepositoryImpl{
 		db: db,
 	}
 }
 
-func (u UserRepositoryImpl) CheckIfUserExists(username string) bool {
-	var exists bool
-	query := `
-		SELECT EXISTS (
-			SELECT 1 FROM users WHERE username = $1
-		);`
-
-	err := u.db.QueryRow(query, username).Scan(&exists)
-	if err != nil {
-		return false
-	}
-
-	return exists
-}
+var userRepositorySet = wire.NewSet(
+	UserRepositoryInit,
+	wire.Bind(new(UserRepository), new(*UserRepositoryImpl)),
+)

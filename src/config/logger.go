@@ -5,23 +5,28 @@ import (
 	"os"
 )
 
-func InitlLog() {
+func InitLogger() {
 	opts := &slog.HandlerOptions{
-		Level:     getLoggerLevel(),
+		Level: getLogLevel(),
 		AddSource: true,
 	}
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, opts))
 	slog.SetDefault(logger)
+
+	slog.Info("Logger initialized")
 }
 
-func getLoggerLevel() slog.Level {
-	value := os.Getenv("LOG_LEVEL")
-
-	switch value {
+func getLogLevel() slog.Level {
+	level := os.Getenv("LOG_LEVEL")
+	switch level {
 	case "DEBUG":
 		return slog.LevelDebug
-	case "TRACE":
+	case "INFO":
+		return slog.LevelInfo
+	case "WARN":
+		return slog.LevelWarn
+	case "ERROR":
 		return slog.LevelError
 	default:
 		return slog.LevelInfo
