@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"auth-backend/app/domain/dao"
+	"api-gateway/app/domain/dao"
 	"log/slog"
 
 	"github.com/google/uuid"
@@ -11,6 +11,7 @@ import (
 
 type DepartmentRepository interface {
 	FindAllDepartments() ([]dao.Department, error)
+	FindDepartmentByName(name string) (dao.Department, error)
 	FindDepartmentById(id uuid.UUID) (dao.Department, error)
 	Save(Department *dao.Department) (dao.Department, error)
 	DeleteDepartmentById(id uuid.UUID) error
@@ -23,13 +24,26 @@ type DepartmentRepositoryImpl struct {
 func (r DepartmentRepositoryImpl) FindAllDepartments() ([]dao.Department, error) {
 	var Departments []dao.Department
 
-	var err = r.db.Find(&Departments).Error
+	err := r.db.Find(&Departments).Error
 	if err != nil {
 		slog.Error("Got an error finding all couples.", "error", err)
 		return nil, err
 	}
 
 	return Departments, nil
+}
+
+func (r DepartmentRepositoryImpl) FindDepartmentByName(name string) (dao.Department, error) {
+	Department := dao.Department{
+		Name: name,
+	}
+	err := r.db.First(&Department, "name = ?", name).Error
+	if err != nil {
+		slog.Error("Got and error when find Department by name.", "error", err)
+		return dao.Department{}, err
+	}
+
+	return Department, nil
 }
 
 func (r DepartmentRepositoryImpl) FindDepartmentById(id uuid.UUID) (dao.Department, error) {
@@ -47,8 +61,7 @@ func (r DepartmentRepositoryImpl) FindDepartmentById(id uuid.UUID) (dao.Departme
 }
 
 func (r DepartmentRepositoryImpl) Save(Department *dao.Department) (dao.Department, error) {
-	var err = r.db.Save(Department).Error
-	if err != nil {
+	if err := r.db.Save(Department).Error; err != nil {
 		slog.Error("Got an error when save Department.", "error", err)
 		return dao.Department{}, err
 	}
@@ -56,8 +69,7 @@ func (r DepartmentRepositoryImpl) Save(Department *dao.Department) (dao.Departme
 }
 
 func (r DepartmentRepositoryImpl) DeleteDepartmentById(id uuid.UUID) error {
-	err := r.db.Delete(&dao.Department{}, id).Error
-	if err != nil {
+	if err := r.db.Delete(&dao.Department{}, id).Error; err != nil {
 		slog.Error("Got an error when delete Department.", "error", err)
 		return err
 	}

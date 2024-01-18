@@ -1,16 +1,18 @@
 package service
 
 import (
-	"auth-backend/app/constant"
-	"auth-backend/app/domain/dao"
-	"auth-backend/app/pkg"
-	"auth-backend/app/repository"
+	"api-gateway/app/constant"
+	"api-gateway/app/domain/dao"
+	"api-gateway/app/domain/dco"
+	"api-gateway/app/pkg"
+	"api-gateway/app/repository"
 	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/google/wire"
+	"gorm.io/gorm"
 )
 
 type DepartmentService interface {
@@ -33,11 +35,13 @@ func (d DepartmentServiceImpl) GetAllDepartments(c *gin.Context) {
 	defer pkg.PanicHandler(c)
 	slog.Info("start to execute program get all departments")
 
-	data, err := d.DepartmentRepository.FindAllDepartments()
+	rawData, err := d.DepartmentRepository.FindAllDepartments()
 	if err != nil {
 		slog.Error("Error when fetching data from database", "error", err)
-		pkg.PanicException(constant.DatabaseError)
+		pkg.PanicException(constant.UnknownError)
 	}
+
+	data := mapDepartmentListToDepartmentResponseList(rawData)
 
 	c.JSON(http.StatusOK, pkg.BuildResponse(constant.Success, data))
 }
@@ -57,11 +61,19 @@ func (d DepartmentServiceImpl) GetDepartmentById(c *gin.Context) {
 		pkg.PanicException(constant.InvalidRequest)
 	}
 
-	data, err := d.DepartmentRepository.FindDepartmentById(departmentID)
-	if err != nil {
+	rawData, err := d.DepartmentRepository.FindDepartmentById(departmentID)
+	switch err {
+	case nil:
+		break
+	case gorm.ErrRecordNotFound:
 		slog.Error("Error when fetching data from database", "error", err)
 		pkg.PanicException(constant.DataNotFound)
+	default:
+		slog.Error("Error when fetching data from database", "error", err)
+		pkg.PanicException(constant.UnknownError)
 	}
+
+	data := mapDepartmentToDepartmentResponse(rawData)
 
 	c.JSON(http.StatusOK, pkg.BuildResponse(constant.Success, data))
 }
@@ -75,19 +87,34 @@ func (d DepartmentServiceImpl) AddDepartment(c *gin.Context) {
 	defer pkg.PanicHandler(c)
 	slog.Info("start to execute program add department")
 
-	var request dao.Department
-	if err := c.ShouldBindJSON(&request); err != nil {
+	var rawRequest dco.DepartmentRequest
+	if err := c.ShouldBindJSON(&rawRequest); err != nil {
 		slog.Error("Error happened: when mapping request from FE. Error", "error", err)
 		pkg.PanicException(constant.InvalidRequest)
 	}
+	request := mapDepartmentRequestToDepartment(rawRequest)
 
-	data, err := d.DepartmentRepository.Save(&request)
-	if err != nil {
-		slog.Error("Error when saving data to database", "error", err)
-		pkg.PanicException(constant.DatabaseError)
+	// check if department already exist
+	_, err := d.DepartmentRepository.FindDepartmentByName(request.Name)
+	switch err {
+	case nil:
+		pkg.PanicException(constant.Conflict)
+	case gorm.ErrRecordNotFound:
+		break
+	default:
+		slog.Error("Error when fetching data from database", "error", err)
+		pkg.PanicException(constant.UnknownError)
 	}
 
-	c.JSON(http.StatusOK, pkg.BuildResponse(constant.Success, data))
+	rawData, err := d.DepartmentRepository.Save(&request)
+	if err != nil {
+		slog.Error("Error when saving data to database", "error", err)
+		pkg.PanicException(constant.UnknownError)
+	}
+
+	data := mapDepartmentToDepartmentResponse(rawData)
+
+	c.JSON(http.StatusCreated, pkg.BuildResponse(constant.Success, data))
 }
 
 func (d DepartmentServiceImpl) UpdateDepartment(c *gin.Context) {
@@ -105,24 +132,27 @@ func (d DepartmentServiceImpl) UpdateDepartment(c *gin.Context) {
 		pkg.PanicException(constant.InvalidRequest)
 	}
 
-	var request dao.Department
-	if err := c.ShouldBindJSON(&request); err != nil {
+	var rawRequest dco.DepartmentRequest
+	if err := c.ShouldBindJSON(&rawRequest); err != nil {
 		slog.Error("Error happened: when mapping request from FE. Error", "error", err)
 		pkg.PanicException(constant.InvalidRequest)
 	}
+	request := mapDepartmentRequestToDepartment(rawRequest)
 
-	data, err := d.DepartmentRepository.FindDepartmentById(departmentID)
+	oldData, err := d.DepartmentRepository.FindDepartmentById(departmentID)
 	if err != nil {
 		slog.Error("Error when fetching data from database", "error", err)
 		pkg.PanicException(constant.DataNotFound)
 	}
 
-	data.Name = request.Name
-	data, err = d.DepartmentRepository.Save(&data)
+	oldData.Name = request.Name
+	rawData, err := d.DepartmentRepository.Save(&oldData)
 	if err != nil {
 		slog.Error("Error when updating data to database", "error", err)
-		pkg.PanicException(constant.DatabaseError)
+		pkg.PanicException(constant.UnknownError)
 	}
+
+	data := mapDepartmentToDepartmentResponse(rawData)
 
 	c.JSON(http.StatusOK, pkg.BuildResponse(constant.Success, data))
 
@@ -144,9 +174,14 @@ func (d DepartmentServiceImpl) DeleteDepartment(c *gin.Context) {
 	}
 
 	err = d.DepartmentRepository.DeleteDepartmentById(departmentID)
-	if err != nil {
+	switch err {
+	case nil:
+		break
+	case gorm.ErrRecordNotFound:
+		pkg.PanicException(constant.DataNotFound)
+	default:
 		slog.Error("Error when deleting data from database", "error", err)
-		pkg.PanicException(constant.DatabaseError)
+		pkg.PanicException(constant.UnknownError)
 	}
 
 	c.JSON(http.StatusOK, pkg.BuildResponse(constant.Success, pkg.Null()))
@@ -156,3 +191,40 @@ var departmentServiceSet = wire.NewSet(
 	wire.Struct(new(DepartmentServiceImpl), "*"),
 	wire.Bind(new(DepartmentService), new(*DepartmentServiceImpl)),
 )
+
+func mapDepartmentToDepartmentResponse(department dao.Department) dco.DepartmentResponse {
+	/* mapDepartmentToDepartmentResponse is a function to map department to department response
+	 * @param department is dao.Department
+	 * @return dco.DepartmentResponse
+	 */
+	return dco.DepartmentResponse{
+		BaseModel: dco.BaseModel{
+			ID:        department.BaseModel.ID,
+			CreatedAt: department.CreatedAt,
+			UpdatedAt: department.UpdatedAt,
+		},
+		Name: department.Name,
+	}
+}
+
+func mapDepartmentListToDepartmentResponseList(departments []dao.Department) []dco.DepartmentResponse {
+	/* mapDepartmentListToDepartmentResponseList is a function to map department list to department response list
+	 * @param departments is []dao.Department
+	 * @return []dco.DepartmentResponse
+	 */
+	var data []dco.DepartmentResponse
+	for _, v := range departments {
+		data = append(data, mapDepartmentToDepartmentResponse(v))
+	}
+	return data
+}
+
+func mapDepartmentRequestToDepartment(req dco.DepartmentRequest) dao.Department {
+	/* mapDepartmentRequestToDepartment is a function to map department request to department
+	 * @param req is dco.DepartmentRequest
+	 * @return dao.Department
+	 */
+	return dao.Department{
+		Name: req.Name,
+	}
+}

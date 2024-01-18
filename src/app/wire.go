@@ -4,10 +4,10 @@
 package app
 
 import (
-	"auth-backend/app/controller"
-	"auth-backend/app/repository"
-	"auth-backend/app/service"
-	"auth-backend/config"
+	"api-gateway/app/controller"
+	"api-gateway/app/repository"
+	"api-gateway/app/service"
+	"api-gateway/config"
 
 	"github.com/google/wire"
 )

@@ -1,19 +1,26 @@
 {
-    // For more information, visit: https://go.microsoft.com/fwlink/?LinkId=733558
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "wire gen auth-backend",
-            "type": "shell",
-            "command": "sh",
-            "args": [
-                "-c",
-                "cd auth-backend && wire gen auth-backend/app"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            }
-        },
-    ]
+  // For more information, visit: https://go.microsoft.com/fwlink/?LinkId=733558
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "wire gen",
+      "type": "shell",
+      "command": "sh",
+      "args": ["-c", "cd src && wire gen api-gateway/app"],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
+      "label": "test",
+      "type": "shell",
+      "command": "sh",
+      "args": ["-c", "cd src && go test ./..."],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      }
+    }
+  ]
 }

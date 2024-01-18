@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"auth-backend/app/service"
+	"api-gateway/app/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"

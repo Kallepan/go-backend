@@ -1,14 +1,14 @@
 package main
 
 import (
-	"auth-backend/app"
-	"auth-backend/app/router"
-	"auth-backend/config"
+	"api-gateway/app"
+	"api-gateway/app/router"
+	"api-gateway/config"
 	"os"
 )
 
 func main() {
-	port := os.Getenv("AUTH_BACKEND_PORT")
+	port := os.Getenv("GATEWAY_BACKEND_PORT")
 	if port == "" {
 		port = "8081"
 	}
@@ -17,6 +17,9 @@ func main() {
 
 	init, _, _ := app.BuildInjector()
 	router := router.Init(init)
+
+	// run migration
+	config.Migrate(init.DB)
 
 	router.Run(":" + port)
 }

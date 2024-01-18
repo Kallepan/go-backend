@@ -1,8 +1,8 @@
 package pkg
 
 import (
-	"auth-backend/app/constant"
-	"auth-backend/app/domain/dto"
+	"api-gateway/app/constant"
+	"api-gateway/app/domain/dto"
 )
 
 func Null() interface{} {

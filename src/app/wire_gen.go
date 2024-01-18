@@ -7,10 +7,10 @@
 package app
 
 import (
-	"auth-backend/app/controller"
-	"auth-backend/app/repository"
-	"auth-backend/app/service"
-	"auth-backend/config"
+	"api-gateway/app/controller"
+	"api-gateway/app/repository"
+	"api-gateway/app/service"
+	"api-gateway/config"
 	"github.com/google/wire"
 )
 
@@ -18,11 +18,16 @@ import (
 
 func BuildInjector() (*config.Injector, func(), error) {
 	gormDB := config.ConnectToDB()
+	systemControllerImpl := &controller.SystemControllerImpl{}
 	userRepositoryImpl := repository.UserRepositoryInit(gormDB)
+	authServiceImpl := &service.AuthServiceImpl{
+		UserRepository: userRepositoryImpl,
+	}
 	userServiceImpl := &service.UserServiceImpl{
 		UserRepository: userRepositoryImpl,
 	}
 	userControllerImpl := &controller.UserControllerImpl{
+		AuthService: authServiceImpl,
 		UserService: userServiceImpl,
 	}
 	departmentRepositoryImpl := repository.DepartmentRepositoryInit(gormDB)
@@ -40,6 +45,8 @@ func BuildInjector() (*config.Injector, func(), error) {
 		PermissionService: permissionServiceImpl,
 	}
 	injector := &config.Injector{
+		DB:             gormDB,
+		SystemCtrl:     systemControllerImpl,
 		UserCtrl:       userControllerImpl,
 		DepartmentCtrl: departmentControllerImpl,
 		PermissionCtrl: permissionControllerImpl,
