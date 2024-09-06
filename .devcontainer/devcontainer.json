@@ -39,9 +39,7 @@
 				"jakeboone02.cypher-query-language",
 				"DavidAnson.vscode-markdownlint",
 				"eamodio.gitlens",
-				"ms-azuretools.vscode-docker",
-				"esbenp.prettier-vscode",
-				"dbaeumer.vscode-eslint"
+				"ms-azuretools.vscode-docker"
 			]
 		}
 	},
